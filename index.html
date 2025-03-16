@@ -1,0 +1,3157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Evaluation System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f9ff;
+        }
+        .login-bg {
+            background-color: #3b82f6;
+        }
+        .sidebar {
+            background-color: #3b82f6;
+            transition: all 0.3s;
+        }
+        .logo {
+            font-weight: 700;
+        }
+        .sidebar-link {
+            transition: all 0.2s;
+        }
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .attendance-present {
+            background-color: #10b981;
+            color: white;
+        }
+        .attendance-absent {
+            background-color: #ef4444;
+            color: white;
+        }
+        .print-only {
+            display: none;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block;
+            }
+            .attendance-sheet, .marks-sheet {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .attendance-sheet th, .attendance-sheet td,
+            .marks-sheet th, .marks-sheet td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Page -->
+        <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="login-bg p-6 text-white text-center">
+                    <h2 class="text-3xl font-bold">Academic Evaluation System</h2>
+                    <p class="mt-2">Login to manage student records and attendance</p>
+                </div>
+                <div class="p-6">
+                    <div class="flex justify-center mb-6">
+                        <div class="flex space-x-4">
+                            <button id="student-login-btn" class="px-4 py-2 rounded-lg bg-gray-200 font-medium" onclick="toggleLoginType('student')">Student</button>
+                            <button id="teacher-login-btn" class="px-4 py-2 rounded-lg bg-gray-200 font-medium" onclick="toggleLoginType('teacher')">Teacher</button>
+                        </div>
+                    </div>
+
+                    <form id="login-form" onsubmit="handleLogin(event)">
+                        <div class="mb-4">
+                            <label for="username" class="block text-gray-700 font-medium mb-2">Username</label>
+                            <input type="text" id="username" name="username" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
+                            <input type="password" id="password" name="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="hidden h-screen flex flex-col md:flex-row">
+            <!-- Sidebar -->
+            <div class="sidebar w-full md:w-64 text-white p-4 flex flex-col h-auto md:h-screen">
+                <div class="logo text-xl mb-8 flex items-center">
+                    <i class="bi bi-book-half text-2xl mr-2"></i>
+                    <span>Academic System</span>
+                </div>
+                <nav class="flex-grow mb-8">
+                    <ul>
+                        <li>
+                            <a href="#dashboard-content" onclick="changeView('dashboard-view')" class="sidebar-link active flex items-center p-3 rounded">
+                                <i class="bi bi-speedometer2 mr-3"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li id="students-nav-item">
+                            <a href="#students" onclick="changeView('students-view')" class="sidebar-link flex items-center p-3 rounded mt-2">
+                                <i class="bi bi-people mr-3"></i>
+                                <span>Students</span>
+                            </a>
+                        </li>
+                        <li id="attendance-nav-item">
+                            <a href="#attendance" onclick="changeView('attendance-view')" class="sidebar-link flex items-center p-3 rounded mt-2">
+                                <i class="bi bi-calendar-check mr-3"></i>
+                                <span>Attendance</span>
+                            </a>
+                        </li>
+                        <li id="subjects-nav-item">
+                            <a href="#subjects" onclick="changeView('subjects-view')" class="sidebar-link flex items-center p-3 rounded mt-2">
+                                <i class="bi bi-journal-text mr-3"></i>
+                                <span>Subjects</span>
+                            </a>
+                        </li>
+                        <li id="timetable-nav-item">
+                            <a href="#timetable" onclick="changeView('timetable-view')" class="sidebar-link flex items-center p-3 rounded mt-2">
+                                <i class="bi bi-calendar-week mr-3"></i>
+                                <span>Timetable</span>
+                            </a>
+                        </li>
+                        <li id="reports-nav-item">
+                            <a href="#reports" onclick="changeView('reports-view')" class="sidebar-link flex items-center p-3 rounded mt-2">
+                                <i class="bi bi-file-earmark-text mr-3"></i>
+                                <span>Reports</span>
+                            </a>
+                        </li>
+                        <li id="marks-nav-item">
+                            <a href="#marks" onclick="changeView('marks-view')" class="sidebar-link flex items-center p-3 rounded mt-2">
+                                <i class="bi bi-clipboard-check mr-3"></i>
+                                <span>Marks</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="mt-auto">
+                    <div class="text-sm mb-2" id="user-info">
+                        Logged in as <span id="user-type" class="font-semibold">Teacher</span>
+                    </div>
+                    <button onclick="logout()" class="w-full bg-white text-blue-500 py-2 px-4 rounded hover:bg-blue-100 transition focus:outline-none">
+                        <i class="bi bi-box-arrow-left mr-2"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-grow overflow-y-auto bg-gray-50">
+                <!-- Header -->
+                <header class="bg-white shadow-sm p-4">
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-xl font-semibold" id="page-title">Dashboard</h1>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-600" id="current-date"></span>
+                            <button class="md:hidden text-gray-600" onclick="toggleMobileMenu()">
+                                <i class="bi bi-list text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Dashboard View -->
+                <div id="dashboard-view" class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold">Total Students</h3>
+                                <div class="bg-blue-100 text-blue-500 p-3 rounded-full">
+                                    <i class="bi bi-people text-xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-3xl font-bold" id="total-students">0</p>
+                            <p class="text-gray-500 mt-2">Across all sections</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold">Attendance Today</h3>
+                                <div class="bg-green-100 text-green-500 p-3 rounded-full">
+                                    <i class="bi bi-calendar-check text-xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-3xl font-bold" id="attendance-percentage">0%</p>
+                            <p class="text-gray-500 mt-2">Average across all subjects</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold">Total Subjects</h3>
+                                <div class="bg-purple-100 text-purple-500 p-3 rounded-full">
+                                    <i class="bi bi-journal-text text-xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-3xl font-bold" id="total-subjects">0</p>
+                            <p class="text-gray-500 mt-2">In the current semester</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Recent Attendance</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Present</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Absent</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="recent-attendance-table">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="4">No data available</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Today's Timetable</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="today-timetable-table">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="3">No classes scheduled for today</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students View -->
+                <div id="students-view" class="p-6 hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold">Students</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="relative">
+                                <input type="text" id="student-search" placeholder="Search students..." class="w-full pl-10 pr-4 py-2 border rounded-lg">
+                                <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <button id="add-student-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+                                <i class="bi bi-plus-lg mr-2"></i> Add Student
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="students-table">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="7">No students added yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add Student Modal -->
+                    <div id="add-student-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+                        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold" id="student-modal-title">Add New Student</h3>
+                                <button onclick="closeStudentModal()" class="text-gray-500 hover:text-gray-700">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <form id="student-form">
+                                <input type="hidden" id="student-id">
+                                <div class="mb-4">
+                                    <label for="student-roll" class="block text-gray-700 font-medium mb-2">Roll Number *</label>
+                                    <input type="text" id="student-roll" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="student-name" class="block text-gray-700 font-medium mb-2">Name *</label>
+                                    <input type="text" id="student-name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="student-branch" class="block text-gray-700 font-medium mb-2">Branch *</label>
+                                    <select id="student-branch" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Branch</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Electrical Engineering">Electrical Engineering</option>
+                                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                        <option value="Civil Engineering">Civil Engineering</option>
+                                        <option value="Electronics">Electronics</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="student-year" class="block text-gray-700 font-medium mb-2">Year *</label>
+                                    <select id="student-year" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Year</option>
+                                        <option value="1">1st Year</option>
+                                        <option value="2">2nd Year</option>
+                                        <option value="3">3rd Year</option>
+                                        <option value="4">4th Year</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="student-section" class="block text-gray-700 font-medium mb-2">Section *</label>
+                                    <select id="student-section" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Section</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="student-email" class="block text-gray-700 font-medium mb-2">Email *</label>
+                                    <input type="email" id="student-email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="student-parent-phone" class="block text-gray-700 font-medium mb-2">Parent's Phone</label>
+                                    <input type="text" id="student-parent-phone" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div class="mb-4" id="password-field">
+                                    <label for="student-password" class="block text-gray-700 font-medium mb-2">Password *</label>
+                                    <input type="password" id="student-password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="flex justify-end space-x-4">
+                                    <button type="button" onclick="closeStudentModal()" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Save Student</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance View -->
+                <div id="attendance-view" class="p-6 hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold">Attendance Management</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <select id="attendance-year-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                            <select id="attendance-branch-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Branch</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Electrical Engineering">Electrical Engineering</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                <option value="Civil Engineering">Civil Engineering</option>
+                                <option value="Electronics">Electronics</option>
+                            </select>
+                            <select id="attendance-section-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">All Sections</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option>
+                                <option value="D">Section D</option>
+                            </select>
+                            <select id="attendance-subject-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Subject</option>
+                            </select>
+                            <input type="date" id="attendance-date" class="px-4 py-2 border rounded-lg">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold" id="attendance-title">
+                                Mark Attendance for <span id="attendance-subject-title">---</span> | <span id="attendance-date-display">---</span>
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button id="save-attendance-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hidden" onclick="saveAttendance()">
+                                    <i class="bi bi-save mr-2"></i> Save Attendance
+                                </button>
+                                <button id="print-attendance-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hidden" onclick="printAttendanceSheet()">
+                                    <i class="bi bi-printer mr-2"></i> Print
+                                </button>
+                            </div>
+                        </div>
+                        <div id="attendance-instructions" class="text-gray-500 mb-4">
+                            Please select a year, branch, subject, section, and date to mark attendance.
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 hidden" id="attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seat No.</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="attendance-records">
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Printable Attendance Sheet -->
+                        <div id="printable-attendance-sheet" class="hidden print-only">
+                            <div class="text-center mb-4">
+                                <h1 class="text-xl font-bold">Daily Attendance Record</h1>
+                                <p class="mb-1"><span id="print-college-name">College Name</span></p>
+                                <p class="mb-1">Subject: <span id="print-subject-name">Subject</span></p>
+                                <p class="mb-1">Date: <span id="print-date">Date</span></p>
+                                <p class="mb-1">Branch: <span id="print-branch">Branch</span>, Year: <span id="print-year">Year</span>, Section: <span id="print-section">Section</span></p>
+                            </div>
+                            <table class="attendance-sheet">
+                                <thead>
+                                    <tr>
+                                        <th>S.No</th>
+                                        <th>Seat No.</th>
+                                        <th>Roll No.</th>
+                                        <th>Student Name</th>
+                                        <th>Status</th>
+                                        <th>Signature</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="print-attendance-records">
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4" class="text-right">Total Present:</td>
+                                        <td id="print-total-present">0</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-right">Total Absent:</td>
+                                        <td id="print-total-absent">0</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-8">
+                                            <p>Teacher's Signature: _______________________</p>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subjects View -->
+                <div id="subjects-view" class="p-6 hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold">Subjects</h2>
+                        <button id="add-subject-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i class="bi bi-plus-lg mr-2"></i> Add Subject
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="subjects-container">
+                        <div class="bg-white p-6 rounded-lg shadow text-center flex flex-col items-center justify-center text-gray-400 border-2 border-dashed">
+                            <i class="bi bi-journal-plus text-5xl mb-2"></i>
+                            <p>No subjects added yet</p>
+                            <p class="text-sm">Click on "Add Subject" to get started</p>
+                        </div>
+                    </div>
+
+                    <!-- Add Subject Modal -->
+                    <div id="add-subject-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+                        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold" id="subject-modal-title">Add New Subject</h3>
+                                <button onclick="closeSubjectModal()" class="text-gray-500 hover:text-gray-700">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <form id="subject-form">
+                                <input type="hidden" id="subject-id">
+                                <div class="mb-4">
+                                    <label for="subject-code" class="block text-gray-700 font-medium mb-2">Subject Code *</label>
+                                    <input type="text" id="subject-code" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="subject-name" class="block text-gray-700 font-medium mb-2">Subject Name *</label>
+                                    <input type="text" id="subject-name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="subject-branch" class="block text-gray-700 font-medium mb-2">Branch *</label>
+                                    <select id="subject-branch" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Branch</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Electrical Engineering">Electrical Engineering</option>
+                                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                        <option value="Civil Engineering">Civil Engineering</option>
+                                        <option value="Electronics">Electronics</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="subject-year" class="block text-gray-700 font-medium mb-2">Year *</label>
+                                    <select id="subject-year" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Year</option>
+                                        <option value="1">1st Year</option>
+                                        <option value="2">2nd Year</option>
+                                        <option value="3">3rd Year</option>
+                                        <option value="4">4th Year</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="subject-semester" class="block text-gray-700 font-medium mb-2">Semester *</label>
+                                    <select id="subject-semester" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Semester</option>
+                                        <option value="1">1st Semester</option>
+                                        <option value="2">2nd Semester</option>
+                                        <option value="3">3rd Semester</option>
+                                        <option value="4">4th Semester</option>
+                                        <option value="5">5th Semester</option>
+                                        <option value="6">6th Semester</option>
+                                        <option value="7">7th Semester</option>
+                                        <option value="8">8th Semester</option>
+                                    </select>
+                                </div>
+                                <div class="flex justify-end space-x-4">
+                                    <button type="button" onclick="closeSubjectModal()" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Save Subject</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timetable View -->
+                <div id="timetable-view" class="p-6 hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold">Timetable Management</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <select id="timetable-year-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                            <select id="timetable-branch-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Branch</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Electrical Engineering">Electrical Engineering</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                <option value="Civil Engineering">Civil Engineering</option>
+                                <option value="Electronics">Electronics</option>
+                            </select>
+                            <select id="timetable-section-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">All Sections</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option>
+                                <option value="D">Section D</option>
+                            </select>
+                            <button id="add-timetable-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="bi bi-plus-lg mr-2"></i> Add Schedule
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200" id="timetable-table">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monday</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tuesday</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wednesday</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thursday</th>
+                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Friday</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="6">No timetable data available. Please select a year, branch and section.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add Timetable Entry Modal -->
+                    <div id="add-timetable-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+                        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold">Add Class Schedule</h3>
+                                <button onclick="closeTimetableModal()" class="text-gray-500 hover:text-gray-700">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <form id="timetable-form">
+                                <div class="mb-4">
+                                    <label for="timetable-day" class="block text-gray-700 font-medium mb-2">Day *</label>
+                                    <select id="timetable-day" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Day</option>
+                                        <option value="Monday">Monday</option>
+                                        <option value="Tuesday">Tuesday</option>
+                                        <option value="Wednesday">Wednesday</option>
+                                        <option value="Thursday">Thursday</option>
+                                        <option value="Friday">Friday</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="timetable-time" class="block text-gray-700 font-medium mb-2">Time Slot *</label>
+                                    <div class="flex space-x-2">
+                                        <input type="time" id="timetable-start-time" class="w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <input type="time" id="timetable-end-time" class="w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="timetable-year" class="block text-gray-700 font-medium mb-2">Year *</label>
+                                    <select id="timetable-year" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required onchange="updateTimetableSubjects()">
+                                        <option value="">Select Year</option>
+                                        <option value="1">1st Year</option>
+                                        <option value="2">2nd Year</option>
+                                        <option value="3">3rd Year</option>
+                                        <option value="4">4th Year</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="timetable-branch" class="block text-gray-700 font-medium mb-2">Branch *</label>
+                                    <select id="timetable-branch" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required onchange="updateTimetableSubjects()">
+                                        <option value="">Select Branch</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Electrical Engineering">Electrical Engineering</option>
+                                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                        <option value="Civil Engineering">Civil Engineering</option>
+                                        <option value="Electronics">Electronics</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="timetable-subject" class="block text-gray-700 font-medium mb-2">Subject *</label>
+                                    <select id="timetable-subject" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Subject</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="timetable-section" class="block text-gray-700 font-medium mb-2">Section *</label>
+                                    <select id="timetable-section" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Section</option>
+                                        <option value="A">Section A</option>
+                                        <option value="B">Section B</option>
+                                        <option value="C">Section C</option>
+                                        <option value="D">Section D</option>
+                                    </select>
+                                </div>
+                                <div class="flex justify-end space-x-4">
+                                    <button type="button" onclick="closeTimetableModal()" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Save Schedule</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports View -->
+                <div id="reports-view" class="p-6 hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold">Attendance Reports</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <select id="report-year-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                            <select id="report-branch-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Branch</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Electrical Engineering">Electrical Engineering</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                <option value="Civil Engineering">Civil Engineering</option>
+                                <option value="Electronics">Electronics</option>
+                            </select>
+                            <select id="report-section-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">All Sections</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option>
+                                <option value="D">Section D</option>
+                            </select>
+                            <select id="report-subject-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Subject</option>
+                            </select>
+                            <button id="generate-report-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="bi bi-file-earmark-text mr-2"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-4">Attendance Summary</h3>
+                        <div id="report-instructions" class="text-gray-500 mb-4">
+                            Please select a year, branch, section, subject, and click "Generate Report" to view attendance records.
+                        </div>
+                        <div id="report-content" class="hidden">
+                            <div class="mb-6">
+                                <div class="flex flex-col md:flex-row md:justify-between md:items-center">
+                                    <h4 class="font-semibold text-lg mb-2 md:mb-0">Subject: <span id="report-subject-name">-</span></h4>
+                                    <div class="flex items-center">
+                                        <span class="mr-4">Overall Attendance: <span id="report-overall-percentage" class="font-semibold">-</span></span>
+                                        <div class="flex space-x-2">
+                                            <button onclick="openManualAttendanceModal()" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded flex items-center">
+                                                <i class="bi bi-pencil-square mr-2"></i> Edit Attendance
+                                            </button>
+                                            <button onclick="printReport()" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded flex items-center">
+                                                <i class="bi bi-printer mr-2"></i> Print
+                                            </button>
+                                            <button onclick="notifyParents()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center">
+                                                <i class="bi bi-envelope mr-2"></i> Notify Parents
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Classes</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Present</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Absent</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance %</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="report-table">
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Attendance Criteria Section -->
+                            <div class="mt-8 border-t pt-6">
+                                <h4 class="font-semibold text-lg mb-4">Attendance Criteria</h4>
+                                <div class="flex flex-col md:flex-row gap-4 items-end mb-4">
+                                    <div class="flex-grow">
+                                        <label for="attendance-criteria" class="block text-gray-700 font-medium mb-2">Minimum Attendance Required (%)</label>
+                                        <input type="number" id="attendance-criteria" min="0" max="100" value="75" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <button onclick="applyAttendanceCriteria()" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center">
+                                        <i class="bi bi-check-circle mr-2"></i> Apply Criteria
+                                    </button>
+                                </div>
+                                <div id="criteria-results" class="hidden mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <p class="font-medium text-yellow-800 mb-2"><i class="bi bi-exclamation-triangle mr-2"></i> Students Below Attendance Criteria</p>
+                                    <ul id="below-criteria-list" class="list-disc pl-5 text-yellow-700">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Attendance Edit Modal -->
+                    <div id="manual-attendance-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+                        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold">Edit Attendance Record</h3>
+                                <button onclick="closeManualAttendanceModal()" class="text-gray-500 hover:text-gray-700">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <form id="manual-attendance-form">
+                                <input type="hidden" id="manual-student-id">
+                                <div class="mb-4">
+                                    <label for="manual-student-name" class="block text-gray-700 font-medium mb-2">Student</label>
+                                    <select id="manual-student-name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Student</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="manual-total-classes" class="block text-gray-700 font-medium mb-2">Total Classes</label>
+                                    <input type="number" id="manual-total-classes" min="0" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="manual-present-count" class="block text-gray-700 font-medium mb-2">Present Count</label>
+                                    <input type="number" id="manual-present-count" min="0" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="manual-reason" class="block text-gray-700 font-medium mb-2">Reason for Edit</label>
+                                    <select id="manual-reason" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option value="">Select Reason</option>
+                                        <option value="Medical Leave">Medical Leave</option>
+                                        <option value="Official Duty">Official Duty</option>
+                                        <option value="Sports Event">Sports Event</option>
+                                        <option value="Other Approved Leave">Other Approved Leave</option>
+                                        <option value="Data Correction">Data Correction</option>
+                                    </select>
+                                </div>
+                                <div class="flex justify-end space-x-4">
+                                    <button type="button" onclick="closeManualAttendanceModal()" class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marks View -->
+                <div id="marks-view" class="p-6 hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold">Internal Examinations</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <select id="marks-year-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                            <select id="marks-branch-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Branch</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Electrical Engineering">Electrical Engineering</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                <option value="Civil Engineering">Civil Engineering</option>
+                                <option value="Electronics">Electronics</option>
+                            </select>
+                            <select id="marks-section-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">All Sections</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option>
+                                <option value="D">Section D</option>
+                            </select>
+                            <select id="marks-subject-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Subject</option>
+                            </select>
+                            <select id="marks-exam-filter" class="px-4 py-2 border rounded-lg">
+                                <option value="">Select Exam</option>
+                                <option value="Sectional Test 1">Sectional Test 1</option>
+                                <option value="Sectional Test 2">Sectional Test 2</option>
+                                <option value="Mid Semester">Mid Semester</option>
+                                <option value="End Semester">End Semester</option>
+                            </select>
+                            <button id="load-marks-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="bi bi-search mr-2"></i> Load Students
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold" id="marks-title">
+                                Examination Marks - <span id="marks-exam-title">---</span> | <span id="marks-subject-title">---</span>
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button id="save-marks-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hidden" onclick="saveMarks()">
+                                    <i class="bi bi-save mr-2"></i> Save Marks
+                                </button>
+                                <button id="print-marks-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hidden" onclick="printMarksSheet()">
+                                    <i class="bi bi-printer mr-2"></i> Print
+                                </button>
+                                <button id="notify-marks-btn" class="bg-purple-500 text-white px-4 py-2 rounded-lg hidden" onclick="notifyMarks()">
+                                    <i class="bi bi-envelope mr-2"></i> Notify Parents
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="marks-instructions" class="text-gray-500 mb-4">
+                            Please select a year, branch, subject, section, and exam to manage marks.
+                        </div>
+                        
+                        <div id="marks-content" class="hidden">
+                            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="flex flex-col md:flex-row gap-4 items-end mb-2">
+                                    <div class="flex-grow">
+                                        <label for="max-marks" class="block text-gray-700 font-medium mb-2">Maximum Marks</label>
+                                        <input type="number" id="max-marks" min="0" value="25" class="w-32 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div class="flex-grow">
+                                        <label for="passing-marks" class="block text-gray-700 font-medium mb-2">Passing Marks</label>
+                                        <input type="number" id="passing-marks" min="0" value="10" class="w-32 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks Obtained</th>
+                                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="marks-records">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Printable Marks Sheet -->
+                        <div id="printable-marks-sheet" class="hidden print-only">
+                            <div class="text-center mb-4">
+                                <h1 class="text-xl font-bold">Internal Examination Marks</h1>
+                                <p class="mb-1"><span id="print-marks-college-name">College Name</span></p>
+                                <p class="mb-1">Subject: <span id="print-marks-subject">Subject</span></p>
+                                <p class="mb-1">Exam: <span id="print-marks-exam">Exam</span></p>
+                                <p class="mb-1">Branch: <span id="print-marks-branch">Branch</span>, Year: <span id="print-marks-year">Year</span>, Section: <span id="print-marks-section">Section</span></p>
+                            </div>
+                            <table class="marks-sheet">
+                                <thead>
+                                    <tr>
+                                        <th>S.No</th>
+                                        <th>Roll No.</th>
+                                        <th>Student Name</th>
+                                        <th>Marks (Out of <span id="print-max-marks">25</span>)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="print-marks-records">
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8">
+                                            <p>Teacher's Signature: _______________________</p>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Dashboard View (for student login) -->
+                <div id="student-dashboard-view" class="p-6 hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">My Profile</h3>
+                            <div class="flex flex-col space-y-4">
+                                <div class="flex flex-col md:flex-row md:justify-between">
+                                    <span class="font-medium text-gray-600">Name:</span>
+                                    <span id="profile-name">-</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between">
+                                    <span class="font-medium text-gray-600">Roll Number:</span>
+                                    <span id="profile-roll">-</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between">
+                                    <span class="font-medium text-gray-600">Branch:</span>
+                                    <span id="profile-branch">-</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between">
+                                    <span class="font-medium text-gray-600">Year:</span>
+                                    <span id="profile-year">-</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between">
+                                    <span class="font-medium text-gray-600">Section:</span>
+                                    <span id="profile-section">-</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between">
+                                    <span class="font-medium text-gray-600">Email:</span>
+                                    <span id="profile-email">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Attendance Summary</h3>
+                            <div id="attendance-summary" class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium">Overall Attendance:</span>
+                                    <span id="overall-attendance-percentage" class="px-3 py-1 bg-green-100 text-green-700 rounded-full">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Today's Timetable</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="student-timetable-table">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="2">No classes scheduled for today</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">My Attendance Record</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="student-attendance-record">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="3">No attendance records available</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">My Examination Marks</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="student-marks-record">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="4">No examination records available</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial data
+        let currentUser = null;
+        let activeView = 'dashboard-view';
+        let students = [];
+        let subjects = [];
+        let timetable = [];
+        let attendance = [];
+        let marks = [];
+        let userType = null;
+        let collegeName = "Academic Evaluation System College";
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const yearNames = {
+            '1': '1st Year',
+            '2': '2nd Year',
+            '3': '3rd Year',
+            '4': '4th Year'
+        };
+
+        // Set current date in the header
+        function updateCurrentDate() {
+            const date = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = date.toLocaleDateString('en-US', options);
+            
+            // Set the attendance date input to current date
+            const today = date.toISOString().split('T')[0];
+            document.getElementById('attendance-date').value = today;
+        }
+
+        // Login functionality
+        function toggleLoginType(type) {
+            userType = type;
+            const studentBtn = document.getElementById('student-login-btn');
+            const teacherBtn = document.getElementById('teacher-login-btn');
+            
+            if (type === 'student') {
+                studentBtn.classList.add('bg-blue-500', 'text-white');
+                studentBtn.classList.remove('bg-gray-200');
+                teacherBtn.classList.remove('bg-blue-500', 'text-white');
+                teacherBtn.classList.add('bg-gray-200');
+            } else {
+                teacherBtn.classList.add('bg-blue-500', 'text-white');
+                teacherBtn.classList.remove('bg-gray-200');
+                studentBtn.classList.remove('bg-blue-500', 'text-white');
+                studentBtn.classList.add('bg-gray-200');
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Simple login validation (in a real app, this would be server-side)
+            if (userType === 'teacher') {
+                // For demo, accept any teacher login with password "admin"
+                if (password === 'admin') {
+                    currentUser = {
+                        type: 'teacher',
+                        name: username
+                    };
+                    showDashboard('teacher');
+                } else {
+                    alert('Invalid teacher credentials');
+                }
+            } else if (userType === 'student') {
+                // Check if student exists with matching password
+                const student = students.find(s => s.email.toLowerCase() === username.toLowerCase() && s.password === password);
+                if (student) {
+                    currentUser = {
+                        type: 'student',
+                        ...student
+                    };
+                    showDashboard('student');
+                } else {
+                    alert('Invalid student credentials');
+                }
+            } else {
+                alert('Please select a user type');
+            }
+        }
+
+        function showDashboard(type) {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('user-type').textContent = type === 'teacher' ? 'Teacher' : 'Student';
+
+            // Show/hide navigation items based on user type
+            if (type === 'teacher') {
+                document.getElementById('students-nav-item').classList.remove('hidden');
+                document.getElementById('attendance-nav-item').classList.remove('hidden');
+                document.getElementById('subjects-nav-item').classList.remove('hidden');
+                document.getElementById('timetable-nav-item').classList.remove('hidden');
+                document.getElementById('reports-nav-item').classList.remove('hidden');
+                document.getElementById('marks-nav-item').classList.remove('hidden');
+                changeView('dashboard-view');
+            } else {
+                document.getElementById('students-nav-item').classList.add('hidden');
+                document.getElementById('attendance-nav-item').classList.add('hidden');
+                document.getElementById('subjects-nav-item').classList.add('hidden');
+                document.getElementById('timetable-nav-item').classList.add('hidden');
+                document.getElementById('reports-nav-item').classList.add('hidden');
+                document.getElementById('marks-nav-item').classList.add('hidden');
+                changeView('student-dashboard-view');
+                updateStudentDashboard();
+            }
+
+            updateDashboardCounters();
+        }
+
+        function logout() {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            currentUser = null;
+        }
+
+        // View management
+        function changeView(viewId) {
+            // Hide all views
+            document.querySelectorAll('div[id$="-view"]').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            // Remove active class from all sidebar links
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected view
+            document.getElementById(viewId).classList.remove('hidden');
+            
+            // Update page title
+            const title = viewId.split('-')[0].charAt(0).toUpperCase() + viewId.split('-')[0].slice(1);
+            document.getElementById('page-title').textContent = title === 'Student' ? 'Student Dashboard' : title;
+            
+            // Add active class to the clicked link
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(link => {
+                if (link.getAttribute('href').substring(1) === viewId.split('-')[0]) {
+                    link.classList.add('active');
+                }
+            });
+            
+            activeView = viewId;
+
+            // Specific view initializations
+            if (viewId === 'dashboard-view') {
+                updateDashboardCounters();
+            } else if (viewId === 'subjects-view') {
+                renderSubjects();
+            } else if (viewId === 'students-view') {
+                renderStudents();
+            } else if (viewId === 'attendance-view') {
+                initializeAttendanceView();
+            } else if (viewId === 'timetable-view') {
+                initializeTimetableView();
+            } else if (viewId === 'student-dashboard-view') {
+                updateStudentDashboard();
+            } else if (viewId === 'reports-view') {
+                initializeReportsView();
+            } else if (viewId === 'marks-view') {
+                initializeMarksView();
+            }
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        // Dashboard functions
+        function updateDashboardCounters() {
+            document.getElementById('total-students').textContent = students.length;
+            document.getElementById('total-subjects').textContent = subjects.length;
+
+            // Calculate attendance percentage
+            if (attendance.length > 0) {
+                let presentCount = 0;
+                let totalCount = 0;
+                
+                // Get today's date in YYYY-MM-DD format
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Filter attendance records for today
+                const todayAttendance = attendance.filter(record => record.date === today);
+                
+                todayAttendance.forEach(record => {
+                    if (record.status === 'present') {
+                        presentCount++;
+                    }
+                    totalCount++;
+                });
+                
+                const percentage = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+                document.getElementById('attendance-percentage').textContent = `${percentage}%`;
+            } else {
+                document.getElementById('attendance-percentage').textContent = '0%';
+            }
+
+            // Update recent attendance table
+            updateRecentAttendanceTable();
+
+            // Update today's timetable
+            updateTodayTimetable();
+        }
+
+        function updateRecentAttendanceTable() {
+            const tableBody = document.getElementById('recent-attendance-table');
+            tableBody.innerHTML = '';
+
+            if (attendance.length > 0) {
+                // Group attendance by date and subject
+                const groupedAttendance = {};
+                
+                attendance.forEach(record => {
+                    const key = `${record.date}-${record.subject}`;
+                    if (!groupedAttendance[key]) {
+                        groupedAttendance[key] = {
+                            date: record.date,
+                            subject: record.subject,
+                            present: 0,
+                            absent: 0
+                        };
+                    }
+                    
+                    if (record.status === 'present') {
+                        groupedAttendance[key].present++;
+                    } else {
+                        groupedAttendance[key].absent++;
+                    }
+                });
+                
+                // Convert the grouped data to an array and sort by date (newest first)
+                const recentAttendance = Object.values(groupedAttendance)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+                
+                recentAttendance.forEach(record => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(record.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${record.subject}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${record.present}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${record.absent}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="4">No data available</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+
+        function updateTodayTimetable() {
+            const tableBody = document.getElementById('today-timetable-table');
+            tableBody.innerHTML = '';
+
+            if (timetable.length > 0) {
+                // Get the day of the week
+                const today = new Date();
+                const dayOfWeek = daysOfWeek[today.getDay()];
+                
+                // Filter timetable for today
+                const todayClasses = timetable.filter(entry => entry.day === dayOfWeek);
+                
+                if (todayClasses.length > 0) {
+                    // Sort by start time
+                    todayClasses.sort((a, b) => a.startTime.localeCompare(b.startTime));
+                    
+                    todayClasses.forEach(entry => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${formatTime(entry.startTime)} - ${formatTime(entry.endTime)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${entry.subject}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">Year ${entry.year}, ${entry.branch}, Section ${entry.section}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="3">No classes scheduled for today</td>`;
+                    tableBody.appendChild(row);
+                }
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="3">No classes scheduled for today</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Student functions
+        function renderStudents() {
+            const tableBody = document.getElementById('students-table');
+            tableBody.innerHTML = '';
+
+            if (students.length > 0) {
+                students.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${student.rollNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${student.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${student.branch}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${yearNames[student.year] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${student.section}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${student.email}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="editStudent('${student.id}')" class="text-blue-500 hover:text-blue-700 mr-3">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button onclick="deleteStudent('${student.id}')" class="text-red-500 hover:text-red-700">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="7">No students added yet</td>`;
+                tableBody.appendChild(row);
+            }
+
+            // Initialize search functionality
+            const searchInput = document.getElementById('student-search');
+            searchInput.addEventListener('keyup', function() {
+                const searchValue = this.value.toLowerCase();
+                const rows = tableBody.getElementsByTagName('tr');
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName('td');
+                    let found = false;
+                    
+                    for (let j = 0; j < cells.length - 1; j++) {
+                        const cellText = cells[j].textContent.toLowerCase();
+                        if (cellText.includes(searchValue)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    rows[i].style.display = found ? '' : 'none';
+                }
+            });
+        }
+
+        function openStudentModal(isEdit = false) {
+            document.getElementById('add-student-modal').classList.remove('hidden');
+            document.getElementById('student-modal-title').textContent = isEdit ? 'Edit Student' : 'Add New Student';
+            document.getElementById('password-field').style.display = isEdit ? 'none' : 'block';
+            
+            if (!isEdit) {
+                document.getElementById('student-form').reset();
+                document.getElementById('student-id').value = '';
+            }
+        }
+
+        function closeStudentModal() {
+            document.getElementById('add-student-modal').classList.add('hidden');
+            document.getElementById('student-form').reset();
+        }
+
+        function editStudent(id) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                document.getElementById('student-id').value = student.id;
+                document.getElementById('student-roll').value = student.rollNumber;
+                document.getElementById('student-name').value = student.name;
+                document.getElementById('student-branch').value = student.branch;
+                document.getElementById('student-year').value = student.year || '';
+                document.getElementById('student-section').value = student.section;
+                document.getElementById('student-email').value = student.email;
+                document.getElementById('student-parent-phone').value = student.parentPhone || '';
+                openStudentModal(true);
+            }
+        }
+
+        function deleteStudent(id) {
+            if (confirm('Are you sure you want to delete this student?')) {
+                students = students.filter(student => student.id !== id);
+                renderStudents();
+                updateDashboardCounters();
+            }
+        }
+
+        // Subject functions
+        function renderSubjects() {
+            const subjectsContainer = document.getElementById('subjects-container');
+            subjectsContainer.innerHTML = '';
+
+            if (subjects.length > 0) {
+                subjects.forEach(subject => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-lg shadow p-6';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-semibold">${subject.name}</h3>
+                            <div class="flex space-x-2">
+                                <button onclick="editSubject('${subject.id}')" class="text-blue-500 hover:text-blue-700">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button onclick="deleteSubject('${subject.id}')" class="text-red-500 hover:text-red-700">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-gray-500 mb-4">${subject.code}</div>
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex justify-between">
+                                <span class="font-medium">Branch:</span>
+                                <span>${subject.branch}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Year:</span>
+                                <span>${yearNames[subject.year] || '-'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Semester:</span>
+                                <span>${subject.semester}</span>
+                            </div>
+                        </div>
+                    `;
+                    subjectsContainer.appendChild(card);
+                });
+            } else {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'bg-white p-6 rounded-lg shadow text-center flex flex-col items-center justify-center text-gray-400 border-2 border-dashed';
+                emptyState.innerHTML = `
+                    <i class="bi bi-journal-plus text-5xl mb-2"></i>
+                    <p>No subjects added yet</p>
+                    <p class="text-sm">Click on "Add Subject" to get started</p>
+                `;
+                subjectsContainer.appendChild(emptyState);
+            }
+
+            // Update subject dropdown in attendance form
+            updateSubjectDropdowns();
+        }
+
+        function openSubjectModal(isEdit = false) {
+            document.getElementById('add-subject-modal').classList.remove('hidden');
+            document.getElementById('subject-modal-title').textContent = isEdit ? 'Edit Subject' : 'Add New Subject';
+            
+            if (!isEdit) {
+                document.getElementById('subject-form').reset();
+                document.getElementById('subject-id').value = '';
+            }
+        }
+
+        function closeSubjectModal() {
+            document.getElementById('add-subject-modal').classList.add('hidden');
+            document.getElementById('subject-form').reset();
+        }
+
+        function editSubject(id) {
+            const subject = subjects.find(s => s.id === id);
+            if (subject) {
+                document.getElementById('subject-id').value = subject.id;
+                document.getElementById('subject-code').value = subject.code;
+                document.getElementById('subject-name').value = subject.name;
+                document.getElementById('subject-branch').value = subject.branch;
+                document.getElementById('subject-year').value = subject.year || '';
+                document.getElementById('subject-semester').value = subject.semester;
+                openSubjectModal(true);
+            }
+        }
+
+        function deleteSubject(id) {
+            if (confirm('Are you sure you want to delete this subject?')) {
+                subjects = subjects.filter(subject => subject.id !== id);
+                renderSubjects();
+                updateDashboardCounters();
+            }
+        }
+
+        // Attendance functions
+        function initializeAttendanceView() {
+            // Set up date picker with today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('attendance-date').value = today;
+
+            // Set up change listeners
+            document.getElementById('attendance-year-filter').addEventListener('change', updateAttendanceSubjects);
+            document.getElementById('attendance-branch-filter').addEventListener('change', updateAttendanceSubjects);
+            document.getElementById('attendance-section-filter').addEventListener('change', filterAttendanceRecords);
+            document.getElementById('attendance-subject-filter').addEventListener('change', filterAttendanceRecords);
+            document.getElementById('attendance-date').addEventListener('change', filterAttendanceRecords);
+
+            // Initialize subject dropdown
+            updateAttendanceSubjects();
+        }
+
+        function updateAttendanceSubjects() {
+            const year = document.getElementById('attendance-year-filter').value;
+            const branch = document.getElementById('attendance-branch-filter').value;
+            const subjectDropdown = document.getElementById('attendance-subject-filter');
+            
+            // Save the currently selected value
+            const selectedValue = subjectDropdown.value;
+            
+            // Clear existing options except the first one
+            while (subjectDropdown.options.length > 1) {
+                subjectDropdown.remove(1);
+            }
+            
+            // Add subject options filtered by year and branch
+            const filteredSubjects = subjects.filter(subject => 
+                (!year || subject.year === year) && 
+                (!branch || subject.branch === branch)
+            );
+            
+            filteredSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                option.textContent = subject.name;
+                subjectDropdown.appendChild(option);
+            });
+            
+            // Restore the selected value if it exists
+            if (selectedValue && [...subjectDropdown.options].some(option => option.value === selectedValue)) {
+                subjectDropdown.value = selectedValue;
+            } else {
+                subjectDropdown.selectedIndex = 0; // Reset to "Select Subject"
+            }
+            
+            // Trigger filter to update the attendance records
+            filterAttendanceRecords();
+        }
+
+        function updateSubjectDropdowns() {
+            const dropdowns = [
+                document.getElementById('report-subject-filter'),
+                document.getElementById('marks-subject-filter')
+            ];
+            
+            dropdowns.forEach(dropdown => {
+                if (dropdown) {
+                    // Save the currently selected value
+                    const selectedValue = dropdown.value;
+                    
+                    // Clear existing options except the first one
+                    while (dropdown.options.length > 1) {
+                        dropdown.remove(1);
+                    }
+                    
+                    // Add subject options
+                    subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.name;
+                        option.textContent = subject.name;
+                        dropdown.appendChild(option);
+                    });
+                    
+                    // Restore the selected value if it exists
+                    if (selectedValue && [...dropdown.options].some(option => option.value === selectedValue)) {
+                        dropdown.value = selectedValue;
+                    }
+                }
+            });
+        }
+
+        function filterAttendanceRecords() {
+            const year = document.getElementById('attendance-year-filter').value;
+            const branch = document.getElementById('attendance-branch-filter').value;
+            const section = document.getElementById('attendance-section-filter').value;
+            const subject = document.getElementById('attendance-subject-filter').value;
+            const date = document.getElementById('attendance-date').value;
+            
+            // Update attendance title
+            document.getElementById('attendance-subject-title').textContent = subject || '---';
+            document.getElementById('attendance-date-display').textContent = date ? formatDate(date) : '---';
+            
+            // Hide attendance instructions and show table if year, branch, subject and date are selected
+            if (year && branch && subject && date) {
+                document.getElementById('attendance-instructions').classList.add('hidden');
+                document.getElementById('attendance-table').classList.remove('hidden');
+                document.getElementById('save-attendance-btn').classList.remove('hidden');
+                document.getElementById('print-attendance-btn').classList.remove('hidden');
+                
+                // Populate attendance table with students
+                populateAttendanceTable(year, branch, section, subject, date);
+            } else {
+                document.getElementById('attendance-instructions').classList.remove('hidden');
+                document.getElementById('attendance-table').classList.add('hidden');
+                document.getElementById('save-attendance-btn').classList.add('hidden');
+                document.getElementById('print-attendance-btn').classList.add('hidden');
+            }
+        }
+
+        function populateAttendanceTable(year, branch, section, subject, date) {
+            const tableBody = document.getElementById('attendance-records');
+            tableBody.innerHTML = '';
+            
+            // Filter students by year, branch and section if necessary
+            let filteredStudents = students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            );
+            
+            if (filteredStudents.length > 0) {
+                filteredStudents.sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
+                
+                filteredStudents.forEach((student, index) => {
+                    // Generate a seat number based on roll number or index
+                    const seatNumber = `${student.section}${String(index + 1).padStart(2, '0')}`;
+                    
+                    // Check if there's an existing attendance record for this student, subject, and date
+                    const existingRecord = attendance.find(record => 
+                        record.studentId === student.id && 
+                        record.subject === subject && 
+                        record.date === date);
+                    
+                    // Store seat number in the attendance record if it doesn't exist
+                    if (existingRecord && !existingRecord.seatNumber) {
+                        existingRecord.seatNumber = seatNumber;
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${seatNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${student.rollNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${student.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap" data-student-id="${student.id}">
+                            <div class="flex space-x-2">
+                                <button class="attendance-btn attendance-present ${existingRecord && existingRecord.status === 'present' ? 'opacity-100' : 'opacity-40'}" 
+                                    onclick="markAttendance('${student.id}', 'present', '${seatNumber}')">
+                                    <i class="bi bi-check-circle mr-1"></i> Present
+                                </button>
+                                <button class="attendance-btn attendance-absent ${existingRecord && existingRecord.status === 'absent' ? 'opacity-100' : 'opacity-40'}" 
+                                    onclick="markAttendance('${student.id}', 'absent', '${seatNumber}')">
+                                    <i class="bi bi-x-circle mr-1"></i> Absent
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="4">No students found for the selected criteria</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+
+        function markAttendance(studentId, status, seatNumber) {
+            const year = document.getElementById('attendance-year-filter').value;
+            const branch = document.getElementById('attendance-branch-filter').value;
+            const section = document.getElementById('attendance-section-filter').value;
+            const subject = document.getElementById('attendance-subject-filter').value;
+            const date = document.getElementById('attendance-date').value;
+            
+            if (year && branch && subject && date) {
+                // Remove existing record for this student, subject, and date if it exists
+                attendance = attendance.filter(record => 
+                    !(record.studentId === studentId && record.subject === subject && record.date === date));
+                
+                // Get the student details
+                const student = students.find(s => s.id === studentId);
+                
+                // Add the new attendance record
+                attendance.push({
+                    id: generateId(),
+                    studentId: studentId,
+                    studentName: student ? student.name : '',
+                    rollNumber: student ? student.rollNumber : '',
+                    year: year,
+                    branch: branch,
+                    section: student ? student.section : '',
+                    subject: subject,
+                    date: date,
+                    status: status,
+                    seatNumber: seatNumber
+                });
+                
+                // Update the UI to reflect the attendance status
+                const statusCell = document.querySelector(`td[data-student-id="${studentId}"]`);
+                const presentBtn = statusCell.querySelector('.attendance-present');
+                const absentBtn = statusCell.querySelector('.attendance-absent');
+                
+                if (status === 'present') {
+                    presentBtn.classList.remove('opacity-40');
+                    presentBtn.classList.add('opacity-100');
+                    absentBtn.classList.remove('opacity-100');
+                    absentBtn.classList.add('opacity-40');
+                } else {
+                    absentBtn.classList.remove('opacity-40');
+                    absentBtn.classList.add('opacity-100');
+                    presentBtn.classList.remove('opacity-100');
+                    presentBtn.classList.add('opacity-40');
+                }
+            }
+        }
+
+        function saveAttendance() {
+            alert('Attendance has been saved successfully!');
+            updateDashboardCounters();
+        }
+
+        function printAttendanceSheet() {
+            const year = document.getElementById('attendance-year-filter').value;
+            const branch = document.getElementById('attendance-branch-filter').value;
+            const section = document.getElementById('attendance-section-filter').value;
+            const subject = document.getElementById('attendance-subject-filter').value;
+            const date = document.getElementById('attendance-date').value;
+            
+            if (!year || !branch || !subject || !date) {
+                alert('Please select year, branch, subject, and date before printing.');
+                return;
+            }
+            
+            // Set print values
+            document.getElementById('print-college-name').textContent = collegeName;
+            document.getElementById('print-subject-name').textContent = subject;
+            document.getElementById('print-date').textContent = formatDate(date);
+            document.getElementById('print-branch').textContent = branch;
+            document.getElementById('print-year').textContent = yearNames[year];
+            document.getElementById('print-section').textContent = section ? `Section ${section}` : 'All Sections';
+            
+            // Get filtered students
+            let filteredStudents = students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            );
+            
+            // Sort by roll number
+            filteredStudents.sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
+            
+            // Populate print attendance table
+            const printTableBody = document.getElementById('print-attendance-records');
+            printTableBody.innerHTML = '';
+            
+            let presentCount = 0;
+            let absentCount = 0;
+            
+            filteredStudents.forEach((student, index) => {
+                // Generate a seat number based on roll number or index
+                const seatNumber = `${student.section}${String(index + 1).padStart(2, '0')}`;
+                
+                // Check if there's an existing attendance record
+                const existingRecord = attendance.find(record => 
+                    record.studentId === student.id && 
+                    record.subject === subject && 
+                    record.date === date);
+                
+                const status = existingRecord ? existingRecord.status : '';
+                
+                if (status === 'present') presentCount++;
+                if (status === 'absent') absentCount++;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${existingRecord?.seatNumber || seatNumber}</td>
+                    <td>${student.rollNumber}</td>
+                    <td>${student.name}</td>
+                    <td>${status === 'present' ? 'Present' : status === 'absent' ? 'Absent' : '-'}</td>
+                    <td></td>
+                `;
+                printTableBody.appendChild(row);
+            });
+            
+            // Update totals
+            document.getElementById('print-total-present').textContent = presentCount;
+            document.getElementById('print-total-absent').textContent = absentCount;
+            
+            // Show print view and trigger print
+            document.getElementById('printable-attendance-sheet').classList.remove('hidden');
+            window.print();
+            document.getElementById('printable-attendance-sheet').classList.add('hidden');
+        }
+
+        // Reports functions
+        function initializeReportsView() {
+            document.getElementById('report-year-filter').addEventListener('change', updateReportSubjects);
+            document.getElementById('report-branch-filter').addEventListener('change', updateReportSubjects);
+            document.getElementById('generate-report-btn').addEventListener('click', generateAttendanceReport);
+            
+            updateReportSubjects();
+        }
+        
+        function updateReportSubjects() {
+            const year = document.getElementById('report-year-filter').value;
+            const branch = document.getElementById('report-branch-filter').value;
+            const subjectDropdown = document.getElementById('report-subject-filter');
+            
+            // Save the currently selected value
+            const selectedValue = subjectDropdown.value;
+            
+            // Clear existing options except the first one
+            while (subjectDropdown.options.length > 1) {
+                subjectDropdown.remove(1);
+            }
+            
+            // Add subject options filtered by year and branch
+            const filteredSubjects = subjects.filter(subject => 
+                (!year || subject.year === year) && 
+                (!branch || subject.branch === branch)
+            );
+            
+            filteredSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                option.textContent = subject.name;
+                subjectDropdown.appendChild(option);
+            });
+            
+            // Restore the selected value if it exists
+            if (selectedValue && [...subjectDropdown.options].some(option => option.value === selectedValue)) {
+                subjectDropdown.value = selectedValue;
+            } else {
+                subjectDropdown.selectedIndex = 0; // Reset to "Select Subject"
+            }
+        }
+        
+        function generateAttendanceReport() {
+            const year = document.getElementById('report-year-filter').value;
+            const branch = document.getElementById('report-branch-filter').value;
+            const section = document.getElementById('report-section-filter').value;
+            const subject = document.getElementById('report-subject-filter').value;
+            
+            if (!year || !branch || !subject) {
+                alert('Please select year, branch, and subject to generate report.');
+                return;
+            }
+            
+            // Filter students
+            let filteredStudents = students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            );
+            
+            // Sort by roll number
+            filteredStudents.sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
+            
+            // Filter attendance records for the selected subject
+            const subjectAttendance = attendance.filter(record => 
+                record.subject === subject &&
+                record.year === year &&
+                record.branch === branch &&
+                (!section || record.section === section)
+            );
+            
+            // Prepare student attendance data
+            const studentAttendanceData = filteredStudents.map(student => {
+                const studentRecords = subjectAttendance.filter(record => record.studentId === student.id);
+                const totalClasses = studentRecords.length;
+                const presentCount = studentRecords.filter(record => record.status === 'present').length;
+                const absentCount = totalClasses - presentCount;
+                const percentage = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
+                
+                return {
+                    id: student.id,
+                    rollNumber: student.rollNumber,
+                    name: student.name,
+                    totalClasses: totalClasses,
+                    present: presentCount,
+                    absent: absentCount,
+                    percentage: percentage
+                };
+            });
+            
+            // Calculate overall attendance percentage
+            let totalPresent = 0;
+            let totalRecords = 0;
+            
+            studentAttendanceData.forEach(data => {
+                totalPresent += data.present;
+                totalRecords += data.totalClasses;
+            });
+            
+            const overallPercentage = totalRecords > 0 ? Math.round((totalPresent / totalRecords) * 100) : 0;
+            
+            // Update UI
+            document.getElementById('report-instructions').classList.add('hidden');
+            document.getElementById('report-content').classList.remove('hidden');
+            document.getElementById('report-subject-name').textContent = subject;
+            document.getElementById('report-overall-percentage').textContent = `${overallPercentage}%`;
+            document.getElementById('criteria-results').classList.add('hidden');
+            
+            // Populate report table
+            const reportTable = document.getElementById('report-table');
+            reportTable.innerHTML = '';
+            
+            if (studentAttendanceData.length > 0) {
+                studentAttendanceData.forEach(data => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${data.rollNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${data.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${data.totalClasses}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${data.present}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${data.absent}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded-full ${data.percentage >= 75 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${data.percentage}%
+                            </span>
+                        </td>
+                    `;
+                    reportTable.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="6">No attendance data available for the selected criteria</td>`;
+                reportTable.appendChild(row);
+            }
+            
+            // Update manual attendance edit modal student dropdown
+            const studentDropdown = document.getElementById('manual-student-name');
+            studentDropdown.innerHTML = '<option value="">Select Student</option>';
+            
+            filteredStudents.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.rollNumber} - ${student.name}`;
+                studentDropdown.appendChild(option);
+            });
+        }
+        
+        function openManualAttendanceModal() {
+            document.getElementById('manual-attendance-modal').classList.remove('hidden');
+            document.getElementById('manual-attendance-form').reset();
+        }
+        
+        function closeManualAttendanceModal() {
+            document.getElementById('manual-attendance-modal').classList.add('hidden');
+        }
+        
+        function applyAttendanceCriteria() {
+            const year = document.getElementById('report-year-filter').value;
+            const branch = document.getElementById('report-branch-filter').value;
+            const section = document.getElementById('report-section-filter').value;
+            const subject = document.getElementById('report-subject-filter').value;
+            const criteriaPercentage = parseInt(document.getElementById('attendance-criteria').value);
+            
+            if (!year || !branch || !subject) {
+                alert('Please generate a report first before applying criteria.');
+                return;
+            }
+            
+            if (isNaN(criteriaPercentage) || criteriaPercentage < 0 || criteriaPercentage > 100) {
+                alert('Please enter a valid attendance criteria percentage (0-100).');
+                return;
+            }
+            
+            // Filter students
+            let filteredStudents = students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            );
+            
+            // Filter attendance records for the selected subject
+            const subjectAttendance = attendance.filter(record => 
+                record.subject === subject &&
+                record.year === year &&
+                record.branch === branch &&
+                (!section || record.section === section)
+            );
+            
+            // Find students below criteria
+            const belowCriteriaStudents = [];
+            
+            filteredStudents.forEach(student => {
+                const studentRecords = subjectAttendance.filter(record => record.studentId === student. id);
+                const totalClasses = studentRecords.length;
+                const presentCount = studentRecords.filter(record => record.status === 'present').length;
+                const percentage = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
+                
+                if (percentage < criteriaPercentage) {
+                    belowCriteriaStudents.push({
+                        id: student.id,
+                        rollNumber: student.rollNumber,
+                        name: student.name,
+                        percentage: percentage,
+                        parentPhone: student.parentPhone
+                    });
+                }
+            });
+            
+            // Display results
+            const criteriaResults = document.getElementById('criteria-results');
+            const belowCriteriaList = document.getElementById('below-criteria-list');
+            
+            criteriaResults.classList.remove('hidden');
+            belowCriteriaList.innerHTML = '';
+            
+            if (belowCriteriaStudents.length > 0) {
+                belowCriteriaStudents.forEach(student => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        ${student.rollNumber} - ${student.name} (${student.percentage}%)
+                        ${student.parentPhone ? `<button onclick="notifyParent('${student.id}', '${subject}', ${student.percentage})" 
+                        class="ml-2 text-blue-600 hover:text-blue-800">
+                            <i class="bi bi-envelope"></i> Notify
+                        </button>` : 
+                        '<span class="ml-2 text-gray-500 text-sm">(No parent contact available)</span>'}
+                    `;
+                    belowCriteriaList.appendChild(listItem);
+                });
+            } else {
+                belowCriteriaList.innerHTML = '<li>No students below criteria</li>';
+            }
+        }
+        
+        function notifyParent(studentId, subject, percentage) {
+            const student = students.find(s => s.id === studentId);
+            if (!student || !student.parentPhone) {
+                alert('Parent contact information not available.');
+                return;
+            }
+            
+            alert(`SMS notification sent to parent of ${student.name} regarding low attendance (${percentage}%) in ${subject}.`);
+        }
+        
+        function notifyParents() {
+            const year = document.getElementById('report-year-filter').value;
+            const branch = document.getElementById('report-branch-filter').value;
+            const section = document.getElementById('report-section-filter').value;
+            const subject = document.getElementById('report-subject-filter').value;
+            const criteriaPercentage = 75; // Default criteria
+            
+            if (!year || !branch || !subject) {
+                alert('Please generate a report first before sending notifications.');
+                return;
+            }
+            
+            // Find students below criteria
+            const belowCriteriaCount = applyNotifications(year, branch, section, subject, criteriaPercentage);
+            
+            if (belowCriteriaCount > 0) {
+                alert(`Notifications sent to parents of ${belowCriteriaCount} students with attendance below ${criteriaPercentage}%.`);
+            } else {
+                alert(`No students found with attendance below ${criteriaPercentage}%.`);
+            }
+        }
+        
+        function applyNotifications(year, branch, section, subject, criteriaPercentage) {
+            // Filter students
+            let filteredStudents = students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            );
+            
+            // Filter attendance records for the selected subject
+            const subjectAttendance = attendance.filter(record => 
+                record.subject === subject &&
+                record.year === year &&
+                record.branch === branch &&
+                (!section || record.section === section)
+            );
+            
+            // Find students below criteria
+            let belowCriteriaCount = 0;
+            
+            filteredStudents.forEach(student => {
+                const studentRecords = subjectAttendance.filter(record => record.studentId === student.id);
+                const totalClasses = studentRecords.length;
+                const presentCount = studentRecords.filter(record => record.status === 'present').length;
+                const percentage = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
+                
+                if (percentage < criteriaPercentage && student.parentPhone) {
+                    // In a real application, this would send an SMS or email to the parent
+                    belowCriteriaCount++;
+                }
+            });
+            
+            return belowCriteriaCount;
+        }
+        
+        function printReport() {
+            window.print();
+        }
+
+        // Marks functions
+        function initializeMarksView() {
+            document.getElementById('marks-year-filter').addEventListener('change', updateMarksSubjects);
+            document.getElementById('marks-branch-filter').addEventListener('change', updateMarksSubjects);
+            document.getElementById('load-marks-btn').addEventListener('click', loadStudentsForMarks);
+            
+            updateMarksSubjects();
+        }
+        
+        function updateMarksSubjects() {
+            const year = document.getElementById('marks-year-filter').value;
+            const branch = document.getElementById('marks-branch-filter').value;
+            const subjectDropdown = document.getElementById('marks-subject-filter');
+            
+            // Save the currently selected value
+            const selectedValue = subjectDropdown.value;
+            
+            // Clear existing options except the first one
+            while (subjectDropdown.options.length > 1) {
+                subjectDropdown.remove(1);
+            }
+            
+            // Add subject options filtered by year and branch
+            const filteredSubjects = subjects.filter(subject => 
+                (!year || subject.year === year) && 
+                (!branch || subject.branch === branch)
+            );
+            
+            filteredSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                option.textContent = subject.name;
+                subjectDropdown.appendChild(option);
+            });
+            
+            // Restore the selected value if it exists
+            if (selectedValue && [...subjectDropdown.options].some(option => option.value === selectedValue)) {
+                subjectDropdown.value = selectedValue;
+            } else {
+                subjectDropdown.selectedIndex = 0; // Reset to "Select Subject"
+            }
+        }
+        
+        function loadStudentsForMarks() {
+            const year = document.getElementById('marks-year-filter').value;
+            const branch = document.getElementById('marks-branch-filter').value;
+            const section = document.getElementById('marks-section-filter').value;
+            const subject = document.getElementById('marks-subject-filter').value;
+            const exam = document.getElementById('marks-exam-filter').value;
+            
+            if (!year || !branch || !subject || !exam) {
+                alert('Please select year, branch, subject, and exam type.');
+                return;
+            }
+            
+            // Update UI
+            document.getElementById('marks-instructions').classList.add('hidden');
+            document.getElementById('marks-content').classList.remove('hidden');
+            document.getElementById('save-marks-btn').classList.remove('hidden');
+            document.getElementById('print-marks-btn').classList.remove('hidden');
+            document.getElementById('notify-marks-btn').classList.remove('hidden');
+            
+            document.getElementById('marks-exam-title').textContent = exam;
+            document.getElementById('marks-subject-title').textContent = subject;
+            
+            // Filter students
+            let filteredStudents = students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            );
+            
+            // Sort by roll number
+            filteredStudents.sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
+            
+            // Populate marks table
+            const marksTable = document.getElementById('marks-records');
+            marksTable.innerHTML = '';
+            
+            if (filteredStudents.length > 0) {
+                filteredStudents.forEach(student => {
+                    // Check if there's an existing marks record
+                    const existingRecord = marks.find(record => 
+                        record.studentId === student.id && 
+                        record.subject === subject && 
+                        record.exam === exam);
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${student.rollNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${student.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="number" min="0" max="100" 
+                                value="${existingRecord ? existingRecord.marks : ''}" 
+                                class="w-20 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onchange="updateMarks('${student.id}', this.value)">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap marks-status" data-student-id="${student.id}">
+                            ${existingRecord ? 
+                                (existingRecord.marks >= parseInt(document.getElementById('passing-marks').value) ? 
+                                    '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700">Pass</span>' : 
+                                    '<span class="px-2 py-1 rounded-full bg-red-100 text-red-700">Fail</span>') 
+                                : '-'}
+                        </td>
+                    `;
+                    marksTable.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="4">No students found for the selected criteria</td>`;
+                marksTable.appendChild(row);
+            }
+            
+            // Add event listeners for max marks and passing marks
+            document.getElementById('max-marks').addEventListener('change', updateMarksStatus);
+            document.getElementById('passing-marks').addEventListener('change', updateMarksStatus);
+        }
+        
+        function updateMarks(studentId, marksValue) {
+            const year = document.getElementById('marks-year-filter').value;
+            const branch = document.getElementById('marks-branch-filter').value;
+            const section = document.getElementById('marks-section-filter').value;
+            const subject = document.getElementById('marks-subject-filter').value;
+            const exam = document.getElementById('marks-exam-filter').value;
+            const maxMarks = parseInt(document.getElementById('max-marks').value);
+            const passingMarks = parseInt(document.getElementById('passing-marks').value);
+            
+            // Get the student
+            const student = students.find(s => s.id === studentId);
+            
+            if (!student) return;
+            
+            // Convert marks to number
+            const marksNum = parseInt(marksValue) || 0;
+            
+            // Validate marks
+            if (marksNum < 0 || marksNum > maxMarks) {
+                alert(`Marks should be between 0 and ${maxMarks}`);
+                return;
+            }
+            
+            // Remove existing marks record for this student, subject, and exam if it exists
+            marks = marks.filter(record => 
+                !(record.studentId === studentId && record.subject === subject && record.exam === exam));
+            
+            // Add the new marks record
+            marks.push({
+                id: generateId(),
+                studentId: studentId,
+                studentName: student.name,
+                rollNumber: student.rollNumber,
+                year: year,
+                branch: branch,
+                section: student.section,
+                subject: subject,
+                exam: exam,
+                marks: marksNum,
+                maxMarks: maxMarks,
+                date: new Date().toISOString().split('T')[0]
+            });
+            
+            // Update status cell
+            const statusCell = document.querySelector(`.marks-status[data-student-id="${studentId}"]`);
+            statusCell.innerHTML = marksNum >= passingMarks ? 
+                '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700">Pass</span>' :
+                '<span class="px-2 py-1 rounded-full bg-red-100 text-red-700">Fail</span>';
+        }
+        
+        function updateMarksStatus() {
+            const maxMarks = parseInt(document.getElementById('max-marks').value);
+            const passingMarks = parseInt(document.getElementById('passing-marks').value);
+            const exam = document.getElementById('marks-exam-filter').value;
+            const subject = document.getElementById('marks-subject-filter').value;
+            
+            // Validate passing marks
+            if (passingMarks > maxMarks) {
+                alert(`Passing marks cannot be greater than maximum marks (${maxMarks})`);
+                document.getElementById('passing-marks').value = maxMarks;
+                return;
+            }
+            
+            // Update all status cells
+            const statusCells = document.querySelectorAll('.marks-status');
+            
+            statusCells.forEach(cell => {
+                const studentId = cell.getAttribute('data-student-id');
+                const record = marks.find(r => 
+                    r.studentId === studentId && 
+                    r.subject === subject && 
+                    r.exam === exam);
+                
+                if (record) {
+                    cell.innerHTML = record.marks >= passingMarks ? 
+                        '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700">Pass</span>' :
+                        '<span class="px-2 py-1 rounded-full bg-red-100 text-red-700">Fail</span>';
+                }
+            });
+        }
+        
+        function saveMarks() {
+            alert('Marks have been saved successfully!');
+        }
+        
+        function printMarksSheet() {
+            const year = document.getElementById('marks-year-filter').value;
+            const branch = document.getElementById('marks-branch-filter').value;
+            const section = document.getElementById('marks-section-filter').value;
+            const subject = document.getElementById('marks-subject-filter').value;
+            const exam = document.getElementById('marks-exam-filter').value;
+            const maxMarks = document.getElementById('max-marks').value;
+            const passingMarks = document.getElementById('passing-marks').value;
+            
+            if (!year || !branch || !subject || !exam) {
+                alert('Please make sure all fields are selected before printing.');
+                return;
+            }
+            
+            // Set print values
+            document.getElementById('print-marks-college-name').textContent = collegeName;
+            document.getElementById('print-marks-subject').textContent = subject;
+            document.getElementById('print-marks-exam').textContent = exam;
+            document.getElementById('print-marks-branch').textContent = branch;
+            document.getElementById('print-marks-year').textContent = yearNames[year];
+            document.getElementById('print-marks-section').textContent = section ? `Section ${section}` : 'All Sections';
+            document.getElementById('print-max-marks').textContent = maxMarks;
+            
+            // Get filtered students
+            let filteredStudents = students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            );
+            
+            // Sort by roll number
+            filteredStudents.sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
+            
+            // Populate print marks table
+            const printTableBody = document.getElementById('print-marks-records');
+            printTableBody.innerHTML = '';
+            
+            filteredStudents.forEach((student, index) => {
+                // Check if there's an existing marks record
+                const existingRecord = marks.find(record => 
+                    record.studentId === student.id && 
+                    record.subject === subject && 
+                    record.exam === exam);
+                
+                const marksValue = existingRecord ? existingRecord.marks : '-';
+                const status = existingRecord ? 
+                    (existingRecord.marks >= parseInt(passingMarks) ? 'Pass' : 'Fail') : 
+                    '-';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${student.rollNumber}</td>
+                    <td>${student.name}</td>
+                    <td>${marksValue}</td>
+                    <td>${status}</td>
+                `;
+                printTableBody.appendChild(row);
+            });
+            
+            // Show print view and trigger print
+            document.getElementById('printable-marks-sheet').classList.remove('hidden');
+            window.print();
+            document.getElementById('printable-marks-sheet').classList.add('hidden');
+        }
+        
+        function notifyMarks() {
+            const year = document.getElementById('marks-year-filter').value;
+            const branch = document.getElementById('marks-branch-filter').value;
+            const section = document.getElementById('marks-section-filter').value;
+            const subject = document.getElementById('marks-subject-filter').value;
+            const exam = document.getElementById('marks-exam-filter').value;
+            const passingMarks = parseInt(document.getElementById('passing-marks').value);
+            
+            if (!year || !branch || !subject || !exam) {
+                alert('Please make sure all fields are selected before sending notifications.');
+                return;
+            }
+            
+            // Find failing students
+            let notifiedCount = 0;
+            
+            students.filter(student => 
+                student.year === year && 
+                student.branch === branch && 
+                (!section || student.section === section)
+            ).forEach(student => {
+                const marksRecord = marks.find(record => 
+                    record.studentId === student.id && 
+                    record.subject === subject && 
+                    record.exam === exam);
+                
+                if (marksRecord && marksRecord.marks < passingMarks && student.parentPhone) {
+                    // In a real application, this would send SMS or email
+                    notifiedCount++;
+                }
+            });
+            
+            if (notifiedCount > 0) {
+                alert(`Notifications sent to parents of ${notifiedCount} students who failed in ${subject} ${exam}.`);
+            } else {
+                alert('No students to notify (either all passed or parent contact information not available).');
+            }
+        }
+
+        // Timetable functions
+        function initializeTimetableView() {
+            document.getElementById('timetable-year-filter').addEventListener('change', renderTimetable);
+            document.getElementById('timetable-branch-filter').addEventListener('change', renderTimetable);
+            document.getElementById('timetable-section-filter').addEventListener('change', renderTimetable);
+            
+            // Initialize year and branch filters for timetable subject dropdown
+            document.getElementById('timetable-year').addEventListener('change', updateTimetableSubjects);
+            document.getElementById('timetable-branch').addEventListener('change', updateTimetableSubjects);
+        }
+
+        function updateTimetableSubjects() {
+            const year = document.getElementById('timetable-year').value;
+            const branch = document.getElementById('timetable-branch').value;
+            const subjectDropdown = document.getElementById('timetable-subject');
+            
+            // Save the currently selected value
+            const selectedValue = subjectDropdown.value;
+            
+            // Clear existing options except the first one
+            while (subjectDropdown.options.length > 1) {
+                subjectDropdown.remove(1);
+            }
+            
+            // Add subject options filtered by year and branch
+            const filteredSubjects = subjects.filter(subject => 
+                (!year || subject.year === year) && 
+                (!branch || subject.branch === branch)
+            );
+            
+            filteredSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                option.textContent = subject.name;
+                subjectDropdown.appendChild(option);
+            });
+            
+            // Restore the selected value if it exists
+            if (selectedValue && [...subjectDropdown.options].some(option => option.value === selectedValue)) {
+                subjectDropdown.value = selectedValue;
+            } else {
+                subjectDropdown.selectedIndex = 0; // Reset to "Select Subject"
+            }
+        }
+
+        function renderTimetable() {
+            const year = document.getElementById('timetable-year-filter').value;
+            const branch = document.getElementById('timetable-branch-filter').value;
+            const section = document.getElementById('timetable-section-filter').value;
+            const tableBody = document.querySelector('#timetable-table tbody');
+            tableBody.innerHTML = '';
+
+            if (!year || !branch || !section) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="6">Please select a year, branch, and section to view the timetable</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+
+            // Filter timetable entries by year, branch and section
+            const filteredTimetable = timetable.filter(entry => 
+                entry.year === year && 
+                entry.branch === branch && 
+                entry.section === section);
+            
+            if (filteredTimetable.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="6">No timetable entries found for the selected year, branch, and section</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+
+            // Group entries by time slot
+            const timeSlots = [];
+            filteredTimetable.forEach(entry => {
+                const timeSlot = `${entry.startTime} - ${entry.endTime}`;
+                if (!timeSlots.includes(timeSlot)) {
+                    timeSlots.push(timeSlot);
+                }
+            });
+            
+            // Sort time slots
+            timeSlots.sort();
+            
+            // Create a row for each time slot
+            timeSlots.forEach(timeSlot => {
+                const [startTime, endTime] = timeSlot.split(' - ');
+                const row = document.createElement('tr');
+                
+                // Time column
+                let html = `<td class="px-6 py-4 whitespace-nowrap font-medium">${formatTime(startTime)} - ${formatTime(endTime)}</td>`;
+                
+                // Day columns (Monday to Friday)
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].forEach(day => {
+                    const entry = filteredTimetable.find(e => 
+                        e.startTime === startTime && e.endTime === endTime && e.day === day);
+                    
+                    if (entry) {
+                        html += `
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium">${entry.subject}</div>
+                            </td>
+                        `;
+                    } else {
+                        html += `<td class="px-6 py-4 whitespace-nowrap text-gray-400">-</td>`;
+                    }
+                });
+                
+                row.innerHTML = html;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function openTimetableModal() {
+            document.getElementById('add-timetable-modal').classList.remove('hidden');
+            document.getElementById('timetable-form').reset();
+            updateTimetableSubjects();
+        }
+
+        function closeTimetableModal() {
+            document.getElementById('add-timetable-modal').classList.add('hidden');
+        }
+
+        // Student dashboard functions
+        function updateStudentDashboard() {
+            if (!currentUser || currentUser.type !== 'student') return;
+            
+            // Update profile information
+            document.getElementById('profile-name').textContent = currentUser.name;
+            document.getElementById('profile-roll').textContent = currentUser.rollNumber;
+            document.getElementById('profile-branch').textContent = currentUser.branch;
+            document.getElementById('profile-year').textContent = yearNames[currentUser.year] || '-';
+            document.getElementById('profile-section').textContent = currentUser.section;
+            document.getElementById('profile-email').textContent = currentUser.email;
+            
+            // Update attendance summary
+            const studentAttendance = attendance.filter(record => record.studentId === currentUser.id);
+            const totalClasses = studentAttendance.length;
+            const presentCount = studentAttendance.filter(record => record.status === 'present').length;
+            const percentage = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
+            
+            document.getElementById('overall-attendance-percentage').textContent = `${percentage}%`;
+            document.getElementById('overall-attendance-percentage').className = 
+                `px-3 py-1 ${percentage >= 75 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-full`;
+            
+            // Update subject-wise attendance summary
+            const attendanceSummary = document.getElementById('attendance-summary');
+            
+            // Clear previous subject summaries
+            const existingSummaries = attendanceSummary.querySelectorAll('.subject-summary');
+            existingSummaries.forEach(element => element.remove());
+            
+            // Group attendance by subject
+            const subjectAttendance = {};
+            studentAttendance.forEach(record => {
+                if (!subjectAttendance[record.subject]) {
+                    subjectAttendance[record.subject] = {
+                        present: 0,
+                        total: 0
+                    };
+                }
+                
+                subjectAttendance[record.subject].total++;
+                if (record.status === 'present') {
+                    subjectAttendance[record.subject].present++;
+                }
+            });
+            
+            // Add subject-wise attendance summaries
+            Object.keys(subjectAttendance).forEach(subject => {
+                const data = subjectAttendance[subject];
+                const subjectPercentage = Math.round((data.present / data.total) * 100);
+                
+                const subjectSummary = document.createElement('div');
+                subjectSummary.className = 'subject-summary flex justify-between items-center';
+                subjectSummary.innerHTML = `
+                    <span>${subject}:</span>
+                    <span class="px-3 py-1 ${subjectPercentage >= 75 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-full">
+                        ${subjectPercentage}% (${data.present}/${data.total})
+                    </span>
+                `;
+                
+                attendanceSummary.appendChild(subjectSummary);
+            });
+            
+            // Update today's timetable
+            updateStudentTimetable();
+            
+            // Update attendance record
+            updateStudentAttendanceRecord();
+            
+            // Update marks record
+            updateStudentMarksRecord();
+        }
+
+        function updateStudentTimetable() {
+            const tableBody = document.getElementById('student-timetable-table');
+            tableBody.innerHTML = '';
+            
+            if (!currentUser) return;
+            
+            // Get the day of the week
+            const today = new Date();
+            const dayOfWeek = daysOfWeek[today.getDay()];
+            
+            // Filter timetable for today and the student's year, branch and section
+            const todayClasses = timetable.filter(entry => 
+                entry.day === dayOfWeek && 
+                entry.year === currentUser.year &&
+                entry.branch === currentUser.branch && 
+                entry.section === currentUser.section);
+            
+            if (todayClasses.length > 0) {
+                // Sort by start time
+                todayClasses.sort((a, b) => a.startTime.localeCompare(b.startTime));
+                
+                todayClasses.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${formatTime(entry.startTime)} - ${formatTime(entry.endTime)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${entry.subject}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="2">No classes scheduled for today</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+
+        function updateStudentAttendanceRecord() {
+            const tableBody = document.getElementById('student-attendance-record');
+            tableBody.innerHTML = '';
+            
+            if (!currentUser) return;
+            
+            // Get attendance records for this student
+            const studentAttendance = attendance.filter(record => record.studentId === currentUser.id);
+            
+            if (studentAttendance.length > 0) {
+                // Sort by date (newest first)
+                studentAttendance.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                studentAttendance.forEach(record => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(record.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${record.subject}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded-full ${record.status === 'present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${record.status === 'present' ? 'Present' : 'Absent'}
+                            </span>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="3">No attendance records available</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+        
+        function updateStudentMarksRecord() {
+            const tableBody = document.getElementById('student-marks-record');
+            tableBody.innerHTML = '';
+            
+            if (!currentUser) return;
+            
+            // Get marks records for this student
+            const studentMarks = marks.filter(record => record.studentId === currentUser.id);
+            
+            if (studentMarks.length > 0) {
+                // Sort by date (newest first)
+                studentMarks.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                studentMarks.forEach(record => {
+                    const row = document.createElement('tr');
+                    const passingMarks = Math.round(record.maxMarks * 0.4); // Assuming 40% is passing
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${record.subject}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${record.exam}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${record.marks}/${record.maxMarks}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded-full ${record.marks >= passingMarks ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${record.marks >= passingMarks ? 'Pass' : 'Fail'}
+                            </span>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-gray-500" colspan="4">No examination records available</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Helper functions
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2);
+        }
+
+        function formatDate(dateString) {
+            const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function formatTime(timeString) {
+            const [hours, minutes] = timeString.split(':');
+            let h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${minutes} ${ampm}`;
+        }
+
+        // Form Submission Handlers
+        document.getElementById('student-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('student-id').value;
+            const isEdit = !!id;
+            
+            const student = {
+                id: isEdit ? id : generateId(),
+                rollNumber: document.getElementById('student-roll').value,
+                name: document.getElementById('student-name').value,
+                branch: document.getElementById('student-branch').value,
+                year: document.getElementById('student-year').value,
+                section: document.getElementById('student-section').value,
+                email: document.getElementById('student-email').value,
+                parentPhone: document.getElementById('student-parent-phone').value
+            };
+            
+            if (!isEdit) {
+                student.password = document.getElementById('student-password').value;
+            } else {
+                // Keep the existing password for edits
+                const existingStudent = students.find(s => s.id === id);
+                student.password = existingStudent.password;
+            }
+            
+            if (isEdit) {
+                // Update existing student
+                students = students.map(s => s.id === id ? student : s);
+            } else {
+                // Add new student
+                students.push(student);
+            }
+            
+            closeStudentModal();
+            renderStudents();
+            updateDashboardCounters();
+        });
+
+        document.getElementById('subject-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('subject-id').value;
+            const isEdit = !!id;
+            
+            const subject = {
+                id: isEdit ? id : generateId(),
+                code: document.getElementById('subject-code').value,
+                name: document.getElementById('subject-name').value,
+                branch: document.getElementById('subject-branch').value,
+                year: document.getElementById('subject-year').value,
+                semester: document.getElementById('subject-semester').value
+            };
+            
+            if (isEdit) {
+                // Update existing subject
+                subjects = subjects.map(s => s.id === id ? subject : s);
+            } else {
+                // Add new subject
+                subjects.push(subject);
+            }
+            
+            closeSubjectModal();
+            renderSubjects();
+            updateDashboardCounters();
+            
+            // Update subject dropdowns
+            updateSubjectDropdowns();
+        });
+
+        document.getElementById('timetable-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const timetableEntry = {
+                id: generateId(),
+                day: document.getElementById('timetable-day').value,
+                startTime: document.getElementById('timetable-start-time').value,
+                endTime: document.getElementById('timetable-end-time').value,
+                year: document.getElementById('timetable-year').value,
+                branch: document.getElementById('timetable-branch').value,
+                subject: document.getElementById('timetable-subject').value,
+                section: document.getElementById('timetable-section').value
+            };
+            
+            // Add new timetable entry
+            timetable.push(timetableEntry);
+            
+            closeTimetableModal();
+            renderTimetable();
+            updateDashboardCounters();
+        });
+
+        document.getElementById('manual-attendance-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentId = document.getElementById('manual-student-name').value;
+            const totalClasses = parseInt(document.getElementById('manual-total-classes').value);
+            const presentCount = parseInt(document.getElementById('manual-present-count').value);
+            const reason = document.getElementById('manual-reason').value;
+            
+            if (!studentId || isNaN(totalClasses) || isNaN(presentCount)) {
+                alert('Please fill in all required fields with valid values.');
+                return;
+            }
+            
+            if (presentCount > totalClasses) {
+                alert('Present count cannot be greater than total classes.');
+                return;
+            }
+            
+            const year = document.getElementById('report-year-filter').value;
+            const branch = document.getElementById('report-branch-filter').value;
+            const subject = document.getElementById('report-subject-filter').value;
+            const student = students.find(s => s.id === studentId);
+            
+            if (!student) {
+                alert('Selected student not found.');
+                return;
+            }
+            
+            // Remove existing attendance records for this student and subject
+            attendance = attendance.filter(record => 
+                !(record.studentId === studentId && record.subject === subject));
+            
+            // Create new attendance records based on manual input
+            const today = new Date();
+            
+            for (let i = 0; i < totalClasses; i++) {
+                // Set date to a day in the past
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                
+                // Record status (present for the first presentCount records, absent for the rest)
+                const status = i < presentCount ? 'present' : 'absent';
+                
+                // Generate a unique seat number
+                const seatNumber = `${student.section}${String(i + 1).padStart(2, '0')}`;
+                
+                // Add the attendance record
+                attendance.push({
+                    id: generateId(),
+                    studentId: studentId,
+                    studentName: student.name,
+                    rollNumber: student.rollNumber,
+                    year: year,
+                    branch: branch,
+                    section: student.section,
+                    subject: subject,
+                    date: dateStr,
+                    status: status,
+                    seatNumber: seatNumber,
+                    manualReason: reason
+                });
+            }
+            
+            alert(`Attendance updated for ${student.name}. ${presentCount} present out of ${totalClasses} classes. Reason: ${reason}`);
+            closeManualAttendanceModal();
+            
+            // Regenerate the report to show updated attendance
+            generateAttendanceReport();
+        });
+
+        // Event listeners for buttons
+        document.getElementById('add-student-btn').addEventListener('click', function() {
+            openStudentModal();
+        });
+
+        document.getElementById('add-subject-btn').addEventListener('click', function() {
+            openSubjectModal();
+        });
+
+        document.getElementById('add-timetable-btn').addEventListener('click', function() {
+            openTimetableModal();
+        });
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            toggleLoginType('teacher');
+            
+            // Add some demo data
+            // Add sample students
+            students = [
+                {
+                    id: 's1',
+                    rollNumber: 'CS001',
+                    name: 'John Doe',
+                    branch: 'Computer Science',
+                    year: '1',
+                    section: 'A',
+                    email: 'john@example.com',
+                    parentPhone: '9876543210',
+                    password: 'student'
+                },
+                {
+                    id: 's2',
+                    rollNumber: 'CS002',
+                    name: 'Jane Smith',
+                    branch: 'Computer Science',
+                    year: '1',
+                    section: 'A',
+                    email: 'jane@example.com',
+                    parentPhone: '9876543211',
+                    password: 'student'
+                },
+                {
+                    id: 's3',
+                    rollNumber: 'EE001',
+                    name: 'Robert Johnson',
+                    branch: 'Electrical Engineering',
+                    year: '2',
+                    section: 'B',
+                    email: 'robert@example.com',
+                    parentPhone: '9876543212',
+                    password: 'student'
+                }
+            ];
+            
+            // Add sample subjects
+            subjects = [
+                {
+                    id: 'sub1',
+                    code: 'CS101',
+                    name: 'Introduction to Programming',
+                    branch: 'Computer Science',
+                    year: '1',
+                    semester: '1'
+                },
+                {
+                    id: 'sub2',
+                    code: 'CS201',
+                    name: 'Data Structures',
+                    branch: 'Computer Science',
+                    year: '1',
+                    semester: '2'
+                },
+                {
+                    id: 'sub3',
+                    code: 'EE101',
+                    name: 'Electric Circuits',
+                    branch: 'Electrical Engineering',
+                    year: '2',
+                    semester: '1'
+                }
+            ];
+            
+            // Add sample timetable entries
+            const today = new Date();
+            const dayOfWeek = daysOfWeek[today.getDay()];
+            
+            timetable = [
+                {
+                    id: 't1',
+                    day: dayOfWeek,
+                    startTime: '09:00',
+                    endTime: '10:30',
+                    subject: 'Introduction to Programming',
+                    branch: 'Computer Science',
+                    year: '1',
+                    section: 'A'
+                },
+                {
+                    id: 't2',
+                    day: dayOfWeek,
+                    startTime: '11:00',
+                    endTime: '12:30',
+                    subject: 'Data Structures',
+                    branch: 'Computer Science',
+                    year: '1',
+                    section: 'A'
+                },
+                {
+                    id: 't3',
+                    day: dayOfWeek,
+                    startTime: '09:00',
+                    endTime: '10:30',
+                    subject: 'Electric Circuits',
+                    branch: 'Electrical Engineering',
+                    year: '2',
+                    section: 'B'
+                }
+            ];
+            
+            // Add sample attendance records
+            const today_date = new Date().toISOString().split('T')[0];
+            
+            attendance = [
+                {
+                    id: 'a1',
+                    studentId: 's1',
+                    studentName: 'John Doe',
+                    rollNumber: 'CS001',
+                    subject: 'Introduction to Programming',
+                    date: today_date,
+                    status: 'present',
+                    year: '1',
+                    branch: 'Computer Science',
+                    section: 'A',
+                    seatNumber: 'A01'
+                },
+                {
+                    id: 'a2',
+                    studentId: 's2',
+                    studentName: 'Jane Smith',
+                    rollNumber: 'CS002',
+                    subject: 'Introduction to Programming',
+                    date: today_date,
+                    status: 'present',
+                    year: '1',
+                    branch: 'Computer Science',
+                    section: 'A',
+                    seatNumber: 'A02'
+                },
+                {
+                    id: 'a3',
+                    studentId: 's3',
+                    studentName: 'Robert Johnson',
+                    rollNumber: 'EE001',
+                    subject: 'Electric Circuits',
+                    date: today_date,
+                    status: 'absent',
+                    year: '2',
+                    branch: 'Electrical Engineering',
+                    section: 'B',
+                    seatNumber: 'B01'
+                }
+            ];
+            
+            // Add sample marks records
+            marks = [
+                {
+                    id: 'm1',
+                    studentId: 's1',
+                    studentName: 'John Doe',
+                    rollNumber: 'CS001',
+                    subject: 'Introduction to Programming',
+                    exam: 'Sectional Test 1',
+                    marks: 22,
+                    maxMarks: 25,
+                    date: today_date,
+                    year: '1',
+                    branch: 'Computer Science',
+                    section: 'A'
+                },
+                {
+                    id: 'm2',
+                    studentId: 's2',
+                    studentName: 'Jane Smith',
+                    rollNumber: 'CS002',
+                    subject: 'Introduction to Programming',
+                    exam: 'Sectional Test 1',
+                    marks: 20,
+                    maxMarks: 25,
+                    date: today_date,
+                    year: '1',
+                    branch: 'Computer Science',
+                    section: 'A'
+                },
+                {
+                    id: 'm3',
+                    studentId: 's3',
+                    studentName: 'Robert Johnson',
+                    rollNumber: 'EE001',
+                    subject: 'Electric Circuits',
+                    exam: 'Sectional Test 1',
+                    marks: 8,
+                    maxMarks: 25,
+                    date: today_date,
+                    year: '2',
+                    branch: 'Electrical Engineering',
+                    section: 'B'
+                }
+            ];
+            
+            updateDashboardCounters();
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
